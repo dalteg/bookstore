@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Review</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'reviews/styles.css' %}">
-</head>
-<body>
+{% extends "review/base.html" %}
+
+{% block title %}Your Review{% endblock %}
+
+{% block content %}
     <main class="review-card">
         <p class="eyebrow">FEEDBACK</p>
         <h1>Share your feedback</h1>
@@ -24,5 +19,4 @@
             <button type="submit">Send review</button>
         </form>
     </main>
-</body>
-</html>
+{% endblock %}
