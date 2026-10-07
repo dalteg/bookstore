@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Review</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'reviews/styles.css' %}">
+</head>
+<body>
+    <main class="review-card">
+        <p class="eyebrow">FEEDBACK</p>
+        <h1>Share your feedback</h1>
+        <p class="intro">We’d love to hear what you think.</p>
+        <form method="POST">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-control {% if field.errors %}errors{% endif %}">
+                    {{field.label_tag}}
+                    {{field}}
+                    {{field.errors}}
+                </div>
+            {% endfor %}
+            <button type="submit">Send review</button>
+        </form>
+    </main>
+</body>
+</html>

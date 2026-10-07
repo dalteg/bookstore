@@ -57,6 +57,23 @@ book_store/
 │       ├── tests.py
 │       ├── urls.py
 │       └── views.py
+├── feedback/
+│   ├── manage.py
+│   ├── feedback/
+│   │   ├── __init__.py
+│   │   ├── asgi.py
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   └── reviews/
+│       ├── migrations/
+│       ├── templates/
+│       ├── admin.py
+│       ├── apps.py
+│       ├── models.py
+│       ├── tests.py
+│       ├── urls.py
+│       └── views.py
 ├── docs/
 │   └── screenshots/
 │       ├── book-list.svg
@@ -125,3 +142,21 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Contributing
 
 Contributions are welcome. If you want to improve the app or add features, open a pull request with a clear description of the change.
+
+## Feedback Project
+
+The feedback site is a separate Django project in the top-level `feedback/` directory, alongside the bookstore project. To run it from the repository root:
+
+```bash
+cd feedback
+python manage.py migrate
+python manage.py runserver
+```
+
+For deployment, set a private `DJANGO_SECRET_KEY` environment variable. During local development, Django uses a temporary key generated at startup.
+
+Run its tests from the same directory with:
+
+```bash
+python manage.py test reviews
+```
