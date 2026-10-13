@@ -21,15 +21,22 @@ class ReviewListViewTests(TestCase):
         self.assertContains(response, "High rating")
         self.assertNotContains(response, "Lower rating")
 
-    def test_homepage_still_displays_review_form(self):
+    def test_homepage_displays_profile_upload_page(self):
         response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="user_image"')
+        self.assertContains(response, "Upload!")
+
+    def test_review_form_is_available_at_create_url(self):
+        response = self.client.get("/reviews/create/")
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="user_name"')
 
     def test_submitting_review_saves_it_and_redirects(self):
         response = self.client.post(
-            "/",
+            "/reviews/create/",
             {
                 "user_name": "New reviewer",
                 "review_text": "Helpful feedback",
