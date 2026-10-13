@@ -1,7 +1,7 @@
 from .forms import ReviewForm
 from .models import Review
 from django.views.generic.base import TemplateView
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.edit import CreateView
 
 
@@ -10,6 +10,7 @@ class ReviewView(CreateView):
     form_class = ReviewForm
     template_name = "review/review.html"
     success_url = "/thank_you/"
+    
 
 
 class ThankYouView(TemplateView):
