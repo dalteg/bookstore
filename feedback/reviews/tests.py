@@ -25,7 +25,7 @@ class ReviewListViewTests(TestCase):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="user_image"')
+        self.assertContains(response, 'name="image"')
         self.assertContains(response, "Upload!")
 
     def test_review_form_is_available_at_create_url(self):

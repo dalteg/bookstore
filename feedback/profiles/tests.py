@@ -1,72 +1,89 @@
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase, override_settings
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from PIL import Image
+
+from .models import UserProfile
 
 
-class ProfileUploadPageTests(TestCase):
-    def test_homepage_renders_profile_upload_page(self):
-        response = self.client.get("/")
+class ProfileViewsTests(TestCase):
+    def setUp(self):
+        self.media_directory = TemporaryDirectory()
+        self.addCleanup(self.media_directory.cleanup)
+        self.settings_override = override_settings(
+            MEDIA_ROOT=Path(self.media_directory.name),
+            DEBUG=True,
+        )
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+
+    def make_image_upload(self, name="picture.png"):
+        image_data = BytesIO()
+        Image.new("RGB", (1, 1), color="purple").save(image_data, format="PNG")
+        return SimpleUploadedFile(
+            name,
+            image_data.getvalue(),
+            content_type="image/png",
+        )
+
+    def test_homepage_renders_profile_upload_form(self):
+        response = self.client.get(reverse("profiles:home"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "profiles/create_profile.html")
-        self.assertContains(response, 'name="user_image"')
-        self.assertContains(response, "Upload!")
+        self.assertContains(response, 'name="image"')
+        self.assertContains(response, 'enctype="multipart/form-data"')
+        self.assertContains(response, "csrfmiddlewaretoken")
 
-    def test_rendered_csrf_token_is_accepted_on_upload_post(self):
-        client = Client(enforce_csrf_checks=True)
-        response = client.get("/")
+    def test_valid_image_upload_is_saved_and_listed(self):
+        response = self.client.post(
+            reverse("profiles:create-profile"),
+            {"image": self.make_image_upload()},
+        )
+
+        self.assertRedirects(response, reverse("profiles:profile-list"))
+        profile = UserProfile.objects.get()
+        self.assertEqual(profile.image.name, "images/picture.png")
+        self.assertTrue(
+            (Path(self.media_directory.name) / profile.image.name).is_file()
+        )
+
+        response = self.client.get(reverse("profiles:profile-list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="csrfmiddlewaretoken"')
-        csrf_token = response.cookies["csrftoken"].value
+        self.assertTemplateUsed(response, "profiles/user_profile.html")
+        self.assertContains(response, 'src="/user-media/images/picture.png"')
 
-        missing_token_response = client.post("/profiles", {})
-        self.assertEqual(missing_token_response.status_code, 403)
-
-        tokenized_response = client.post(
-            "/profiles",
-            {},
-            HTTP_X_CSRFTOKEN=csrf_token,
-        )
-        self.assertEqual(tokenized_response.status_code, 400)
-        self.assertContains(
-            tokenized_response,
-            "This field is required.",
-            status_code=400,
+    def test_profile_list_displays_uploaded_images(self):
+        profile = UserProfile()
+        profile.image.save(
+            "existing.png",
+            self.make_image_upload("existing.png"),
         )
 
-    def test_upload_saves_file_under_configured_media_root(self):
-        with TemporaryDirectory() as temp_directory:
-            with override_settings(MEDIA_ROOT=Path(temp_directory)):
-                response = self.client.post(
-                    "/profiles/",
-                    {
-                        "user_image": SimpleUploadedFile(
-                            "picture.png",
-                            b"test image data",
-                            content_type="image/png",
-                        )
-                    },
-                )
+        response = self.client.get("/profiles/lists")
 
-                self.assertRedirects(
-                    response,
-                    "/",
-                    fetch_redirect_response=False,
-                )
-                self.assertEqual(
-                    (Path(temp_directory) / "picture.png").read_bytes(),
-                    b"test image data",
-                )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "profiles/user_profile.html")
+        self.assertContains(response, f'src="{profile.image.url}"')
+        self.assertContains(response, 'alt="Uploaded profile image"')
 
-    def test_upload_without_file_returns_clear_error(self):
-        response = self.client.post("/profiles", {})
-
-        self.assertEqual(response.status_code, 400)
-        self.assertContains(
-            response,
-            "This field is required.",
-            status_code=400,
+    def test_pdf_upload_is_rejected(self):
+        response = self.client.post(
+            reverse("profiles:create-profile"),
+            {
+                "image": SimpleUploadedFile(
+                    "document.pdf",
+                    b"%PDF-1.4 this is not an image",
+                    content_type="application/pdf",
+                )
+            },
         )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Upload a valid image")
+        self.assertEqual(UserProfile.objects.count(), 0)

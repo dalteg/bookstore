@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="{% static "profiles/styles.css" %}">
 </head>
 <body>
-  <form action="{% url 'create-profile' %}" method="post" enctype="multipart/form-data">
+  <form action="{% url 'profiles:create-profile' %}" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form }}
     

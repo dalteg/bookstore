@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uploaded Profiles</title>
+</head>
+<body>
+    <h1>Uploaded profile images</h1>
+    <ul>
+        {% for profile in profiles %}
+            <li>
+                <img src="{{ profile.image.url }}" alt="Uploaded profile image">
+            </li>
+        {% empty %}
+            <li>No profile images have been uploaded yet.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
